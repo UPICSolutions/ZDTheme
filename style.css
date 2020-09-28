@@ -138,7 +138,7 @@
 .ns-effect-slidetop p {
 	padding: 0 3.2em;
 	font-size: 1.2em;
-	display: inline-block;
+	display: block;
 }
 
 .ns-effect-slidetop .ns-close::before,
