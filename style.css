@@ -594,7 +594,10 @@ ul {
 .form-field input[type="checkbox"] {
   width: auto;
 }
-
+.form-field .nesty-panel {
+    height: auto;
+    max-height: 550px;
+}
 .form-field .nesty-input {
   border-radius: 4px;
   height: 40px;
