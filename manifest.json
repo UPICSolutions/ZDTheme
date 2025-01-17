@@ -1,7 +1,7 @@
 {
-  "name": "Upic 5.0",
+  "name": "Upic 4.0",
   "author": "Zendesk",
-  "version": "1.4.11",
+  "version": "1.4.12",
   "api_version": 1,
   "default_locale": "en-us",
   "settings": [
