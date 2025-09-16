@@ -180,3 +180,10 @@ $(document).ready(function() {
     this.setAttribute("aria-expanded", !isExpanded);
   });
 });
+//Hide and auto-fill subject line on the New User Request form//
+var ticketForm = location.search.split('ticket_form_id=')[1];
+
+if(ticketForm == 40202845830427) {
+$('.form-field.string.optional.request_subject').hide();// Hide subject 
+$('.form-field.string.required.request_subject').hide(); // Hide subject
+$('#request_subject').val('PLACEHOLDERSUBJECT'); // Autofill subject
