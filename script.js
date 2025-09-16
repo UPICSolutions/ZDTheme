@@ -179,59 +179,69 @@ $(document).ready(function () {
     var isExpanded = this.getAttribute("aria-expanded") === "true";
     this.setAttribute("aria-expanded", !isExpanded);
   });
-  //Hide and auto-fill subject line on the New User Request form//
+  //Hide and auto-fill subject and description line on the New User Request form//
   var ticketForm = location.search.split('ticket_form_id=')[1];
 
   if (ticketForm == 40202845830427) {
   $('.form-field.string.optional.request_subject').hide();// Hide subject 
   $('.form-field.string.required.request_subject').hide(); // Hide subject
-  // Your custom field IDs
+ $('.form-field.string.optional.request_subject, .form-field.string.required.request_subject').hide();
+  $('.form-field.request_description').hide(); // Hide description
+
   const FIELD = {
     firstName: '41134679554331',
     lastName:  '41134723405595',
     startDate: '41134762486555'
   };
 
-  // Helpers
   function getVal(fid) {
     const el = document.querySelector(`#request_custom_fields_${fid}`);
     return el && el.value ? el.value.trim() : '';
   }
+
   function prettyDate(iso) {
     if (!iso) return '';
-    const d = new Date(iso);            // Zendesk stores date fields as YYYY-MM-DD
-    if (isNaN(d.getTime())) return iso; // fall back if browser can't parse
-    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'2-digit' });
   }
 
-  // Build and set the subject
-  function buildSubject() {
+  function buildFields() {
     const first = getVal(FIELD.firstName);
     const last  = getVal(FIELD.lastName);
     const start = prettyDate(getVal(FIELD.startDate));
 
-    // Adjust template to your preference
-    const parts = [];
-    if (first || last) parts.push(`New User: ${first} ${last}`.trim());
-    if (start) parts.push(`Start ${start}`);
-    const subject = parts.join(' | ');
+    let subjectParts = [];
+    if (first || last) subjectParts.push(`New User: ${first} ${last}`.trim());
+    if (start) subjectParts.push(`Start ${start}`);
+    const subject = subjectParts.join(' | ');
 
+    // Build a description message - adjust as needed
+    let description = `Request for new user ${first} ${last}`;
+    if (start) {
+      description += ` starting on ${start}.`;
+    } else {
+      description += `.`;
+    }
+    description += ' Please set up all access and accounts needed.';
+
+    // Set the fields
     if (subject) $('#request_subject').val(subject);
+    if (description) $('#request_description').val(description);
   }
 
-  // Update when users type or pick a date
+  // Wire events
   [`#request_custom_fields_${FIELD.firstName}`,
    `#request_custom_fields_${FIELD.lastName}`,
    `#request_custom_fields_${FIELD.startDate}`].forEach(sel => {
-     $(document).on('input change', sel, buildSubject);
+     $(document).on('input change', sel, buildFields);
   });
 
-  // Initial set
-  buildSubject();
+  // Initial call
+  buildFields();
 
-  // Optional: if your theme loads fields dynamically, observe for late renders
-  // to re-run setup (safer than legacy DOMNodeInserted).
-  const mo = new MutationObserver(() => buildSubject());
+  // Optional: fallback / mutation observer in case form loads dynamic parts
+  const mo = new MutationObserver(() => buildFields());
   mo.observe(document.body, { childList: true, subtree: true });
   }
 });
