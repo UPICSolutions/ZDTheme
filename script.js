@@ -233,6 +233,5 @@ $(document).ready(function () {
   // to re-run setup (safer than legacy DOMNodeInserted).
   const mo = new MutationObserver(() => buildSubject());
   mo.observe(document.body, { childList: true, subtree: true });
-}
   }
 });
