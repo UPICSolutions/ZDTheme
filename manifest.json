@@ -2,7 +2,6 @@
   "name": "Upic 4.0",
   "author": "Zendesk",
   "version": "1.4.16",
-  "api_version": 1,
   "default_locale": "en-us",
   "settings": [
     {
@@ -206,6 +205,13 @@
           "label": "logo_label"
         },
         {
+          "identifier": "show_brand_name",
+          "type": "checkbox",
+          "description": "show_brand_name_description",
+          "label": "show_brand_name_label",
+          "value": true
+        },
+        {
           "identifier": "favicon",
           "type": "file",
           "description": "favicon_description",
@@ -250,7 +256,7 @@
           "identifier": "scoped_kb_search",
           "type": "checkbox",
           "description": "scoped_knowledge_base_search_description",
-          "label": "scoped_knowledge_base_search_label",
+          "label": "scoped_knowledge_base_search_label_v2",
           "value": true
         },
         {
@@ -368,6 +374,18 @@
           "description": "follow_topic_description",
           "label": "follow_topic_label",
           "value": true
+        }
+      ]
+    },
+    {
+      "label": "request_list_group_label",
+      "variables": [
+        {
+          "identifier": "request_list_beta",
+          "type": "checkbox",
+          "description": "request_list_beta_description",
+          "label": "request_list_beta_label",
+          "value": false
         }
       ]
     }
