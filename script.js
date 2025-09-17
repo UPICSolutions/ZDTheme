@@ -179,69 +179,168 @@ $(document).ready(function () {
     var isExpanded = this.getAttribute("aria-expanded") === "true";
     this.setAttribute("aria-expanded", !isExpanded);
   });
-  //Hide and auto-fill subject and description line on the New User Request form//
-  var ticketForm = location.search.split('ticket_form_id=')[1];
+}); 
+document.addEventListener('DOMContentLoaded', function () {
+  // Scope to this specific form
+  if (typeof ticketForm === 'undefined' || ticketForm != 40202845830427) return;
 
-  if (ticketForm == 40202845830427) {
-  $('.form-field.string.optional.request_subject').hide();// Hide subject 
-  $('.form-field.string.required.request_subject').hide(); // Hide subject
- $('.form-field.string.optional.request_subject, .form-field.string.required.request_subject').hide();
-  $('.form-field.request_description').hide(); // Hide description
-
+  // Your custom field IDs
   const FIELD = {
     firstName: '41134679554331',
     lastName:  '41134723405595',
-    startDate: '41134762486555'
+    startDate: '41134762486555',
+    computerUse: '41134825610779',     // "Will this employee use a company computer?"
+    termFlag:   '41135204750107'       // the Yes/No field for showing the termination message
   };
 
-  function getVal(fid) {
-    const el = document.querySelector(`#request_custom_fields_${fid}`);
-    return el && el.value ? el.value.trim() : '';
-  }
+  // Link to your Termination form
+  const terminationFormURL = 'https://yourcompany.zendesk.com/hc/en-us/requests/new?ticket_form_id=XXXXXX';
 
-  function prettyDate(iso) {
+  // Stable selectors for Subject and Description in Garden-based forms
+  const qSubject = 'input[name="request[subject]"]';
+  const qDescription = 'textarea[name="request[description]"]';
+
+  // Helpers
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+  const getVal = (fid) => {
+    const el = $(`#request_custom_fields_${fid}`);
+    return el && typeof el.value === 'string' ? el.value.trim() : '';
+  };
+  const prettyDate = (iso) => {
     if (!iso) return '';
     const d = new Date(iso);
     if (isNaN(d.getTime())) return iso;
-    return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'2-digit' });
-  }
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+  };
 
-  function buildFields() {
+  // Build Subject + Description from fields
+  function buildTexts() {
     const first = getVal(FIELD.firstName);
     const last  = getVal(FIELD.lastName);
     const start = prettyDate(getVal(FIELD.startDate));
 
-    let subjectParts = [];
+    const subjectParts = [];
     if (first || last) subjectParts.push(`New User: ${first} ${last}`.trim());
     if (start) subjectParts.push(`Start ${start}`);
     const subject = subjectParts.join(' | ');
 
-    // Build a description message - adjust as needed
-    let description = `Request for new user ${first} ${last}`;
-    if (start) {
-      description += ` starting on ${start}.`;
-    } else {
-      description += `.`;
+    let description = `Request for new user ${[first, last].filter(Boolean).join(' ') || '(name pending)'}.`;
+    if (start) description += ` Start date: ${start}.`;
+    description += ' Please provision accounts, access, and equipment per standards.';
+
+    // Set and hide Subject
+    const subjEl = $(qSubject);
+    if (subjEl) {
+      subjEl.value = subject;
+      const subjField = subjEl.closest('[data-garden-id="forms.field"]') || subjEl.parentElement;
+      if (subjField) subjField.style.display = 'none';
     }
-    description += ' Please set up all access and accounts needed.';
 
-    // Set the fields
-    if (subject) $('#request_subject').val(subject);
-    if (description) $('#request_description').val(description);
+    // Set and hide Description
+    const descEl = $(qDescription);
+    if (descEl) {
+      descEl.value = description;
+      const descField = descEl.closest('[data-garden-id="forms.field"]') || descEl.parentElement;
+      if (descField) descField.style.display = 'none';
+    }
   }
 
-  // Wire events
-  [`#request_custom_fields_${FIELD.firstName}`,
-   `#request_custom_fields_${FIELD.lastName}`,
-   `#request_custom_fields_${FIELD.startDate}`].forEach(sel => {
-     $(document).on('input change', sel, buildFields);
+  // Insert section headings above specific fields
+  function insertHeading(beforeSelector, text) {
+    const el = $(beforeSelector);
+    if (!el) return;
+    const heading = document.createElement('div');
+    heading.className = 'custom-section-heading';
+    heading.textContent = text;
+    el.parentNode.insertBefore(heading, el);
+  }
+
+  // Conditional termination message if termFlag == "No"
+  function ensureTerminationNotice() {
+    const host = $(`#request_custom_fields_${FIELD.termFlag}`);
+    if (!host || $('#termination-notice')) return;
+
+    const msg = document.createElement('div');
+    msg.id = 'termination-notice';
+    msg.style.display = 'none';
+    msg.className = 'termination-note';
+    msg.innerHTML =
+      `If "No", please fill out the ` +
+      `<a href="${terminationFormURL}" target="_blank" rel="noopener noreferrer">Employee Termination Form</a> ` +
+      `(if applicable).<br>Note: The form will open in a new window.`;
+
+    host.parentNode.insertBefore(msg, host.nextSibling);
+  }
+  function updateTerminationNotice() {
+    const el = $(`#request_custom_fields_${FIELD.termFlag}`);
+    const note = $('#termination-notice');
+    if (!el || !note) return;
+    const val = (el.value || '').toLowerCase();
+    note.style.display = val === 'no' ? 'block' : 'none';
+  }
+
+  // Two small UX helpers: headings and compact two-column option (opt-in)
+  function addHeadings() {
+    insertHeading(`#request_custom_fields_${FIELD.firstName}`, 'NEW EMPLOYEE INFORMATION');
+    insertHeading(`#request_custom_fields_${FIELD.computerUse}`, 'COMPUTER SETUP INFORMATION');
+  }
+
+  // Robustness: re-run logic as fields render or change
+  function wireEvents() {
+    // Rebuild subject/description when key fields change
+    [FIELD.firstName, FIELD.lastName, FIELD.startDate].forEach(fid => {
+      const sel = `#request_custom_fields_${fid}`;
+      $(document).addEventListener?.('change', buildTexts);
+      const el = $(sel);
+      if (el) {
+        el.addEventListener('input', buildTexts);
+        el.addEventListener('change', buildTexts);
+      }
+    });
+
+    // Termination message visibility
+    const termEl = $(`#request_custom_fields_${FIELD.termFlag}`);
+    if (termEl) {
+      termEl.addEventListener('change', updateTerminationNotice);
+      termEl.addEventListener('input', updateTerminationNotice);
+    }
+  }
+
+  // One-time CSS for headings and notice
+  (function injectCSS() {
+    if ($('#_custom_form_css')) return;
+    const style = document.createElement('style');
+    style.id = '_custom_form_css';
+    style.textContent = `
+      .custom-section-heading {
+        margin-top: 20px; margin-bottom: 10px;
+        font-size: 1.1rem; font-weight: 700;
+        border-bottom: 1px solid #ddd; padding-bottom: 4px;
+      }
+      .termination-note {
+        margin: 12px 0; padding: 10px;
+        background: #fff3cd; border: 1px solid #ffe58f; border-radius: 4px;
+      }
+    `;
+    document.head.appendChild(style);
+  })();
+
+  // First run
+  addHeadings();
+  ensureTerminationNotice();
+  buildTexts();
+  updateTerminationNotice();
+  wireEvents();
+
+  // In case the form renders late or re-renders, observe and reapply
+  const mo = new MutationObserver(() => {
+    addHeadings();
+    ensureTerminationNotice();
+    buildTexts();
+    updateTerminationNotice();
   });
-
-  // Initial call
-  buildFields();
-
-  // Optional: fallback / mutation observer in case form loads dynamic parts
-  const mo = new MutationObserver(() => buildFields());
   mo.observe(document.body, { childList: true, subtree: true });
-  }
 });
+
+
