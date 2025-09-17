@@ -3,82 +3,37 @@
  */
 
 $(document).ready(function () {
-  // Upic Added - Scroll to top
-  // browser window scroll (in pixels) after which the "back to top" link is shown
-  // var offset = 300,
-  // browser window scroll (in pixels) after which the "back to top" link opacity is reduced
-  // offset_opacity = 1200,
-  // duration of the top scrolling animation (in ms)
-  // scroll_top_duration = 700,
-  // grab the "back to top" link
-  // $back_to_top = $('.cd-top');
+  // ===== Your existing sitewide behaviors (kept) =====
 
-  //hide or show the "back to top" link
-  //$(window).scroll(function(){
-  //( $(this).scrollTop() > offset ) ? $back_to_top.addClass('cd-is-visible') : $back_to_top.removeClass('cd-is-visible cd-fade-out');
-  //if( $(this).scrollTop() > offset_opacity ) { 
-  //$back_to_top.addClass('cd-fade-out');
-  //}
-  //});
-
-  //smooth scroll to top
-  //$back_to_top.on('click', function(event){
-  //event.preventDefault();
-  //$('body,html').animate({
-  //scrollTop: 0 ,
-  //}, scroll_top_duration
-  //);
-  //});
-  // Upic Added - MW-Notification Banner
-  $.get("/api/v2/help_center/" + $('html').attr('lang').toLowerCase() + "/articles.json?label_names=alert").done(function (data) {
-
-    $.each(data.articles, function (index, item) {
-
-      var style1 = '<div class="ns-box ns-bar ns-effect-slidetop ns-type-notice ns-show"><div class="ns-box-inner"><span class="megaphone"></span></i><p><a href="' + item.html_url + '">' + item.title + '</a>' + item.body + '</p></div><span class="ns-close"></span></div>'
-
-      $('.alertbox').append(style1);
-    });
-    $('.ns-close').on('click', function () {
-      $(".alertbox").remove();
+  // MW-Notification Banner (label=alert)
+  $.get("/api/v2/help_center/" + $('html').attr('lang').toLowerCase() + "/articles.json?label_names=alert")
+    .done(function (data) {
+      $.each(data.articles, function (index, item) {
+        var banner = '<div class="ns-box ns-bar ns-effect-slidetop ns-type-notice ns-show"><div class="ns-box-inner"><span class="megaphone"></span><p><a href="' + item.html_url + '">' + item.title + '</a>' + item.body + '</p></div><span class="ns-close"></span></div>';
+        $('.alertbox').append(banner);
+      });
+      $('.ns-close').on('click', function () { $(".alertbox").remove(); });
     });
 
-  });
-  // Upic Added - Change string for My Activities
+  // My Activities text
   $('.nav-wrapper .dropdown-menu .my-activities').html('See my tickets');
-  $('.sub-nav').find('li').filter(":last");
 
-  //Upic Added - Change string for Search bar 
+  // Search placeholder
   $('#query').attr('placeholder', 'Hi, how can we help?');
-
-  //Upic Added - Change string for Search bar signed in users
-  if (HelpCenter.user.role != 'anonymous') {
-    $('#query')
-      .attr('placeholder',
-        'Hi ' + HelpCenter.user.name.split(" ")[0] + ', how can we help?');
+  if (window.HelpCenter && HelpCenter.user && HelpCenter.user.role !== 'anonymous') {
+    $('#query').attr('placeholder', 'Hi ' + HelpCenter.user.name.split(" ")[0] + ', how can we help?');
   }
 
-  // social share popups
-  $(".share a").click(function (e) {
-    e.preventDefault();
-    window.open(this.href, "", "height = 500, width = 500");
-  });
-
-  // show form controls when the textarea receives focus or backbutton is used and value exists
+  // Request page interactions (kept)
   var $commentContainerTextarea = $(".comment-container textarea"),
-    $commentContainerFormControls = $(".comment-form-controls, .comment-ccs");
+      $commentContainerFormControls = $(".comment-form-controls, .comment-ccs");
 
-  $commentContainerTextarea.one("focus", function () {
-    $commentContainerFormControls.show();
-  });
+  $commentContainerTextarea.one("focus", function () { $commentContainerFormControls.show(); });
+  if ($commentContainerTextarea.val() !== "") { $commentContainerFormControls.show(); }
 
-  if ($commentContainerTextarea.val() !== "") {
-    $commentContainerFormControls.show();
-  }
-
-  // Expand Request comment form when Add to conversation is clicked
   var $showRequestCommentContainerTrigger = $(".request-container .comment-container .comment-show-container"),
-    $requestCommentFields = $(".request-container .comment-container .comment-fields"),
-    $requestCommentSubmit = $(".request-container .comment-container .request-submit-comment");
+      $requestCommentFields = $(".request-container .comment-container .comment-fields"),
+      $requestCommentSubmit = $(".request-container .comment-container .request-submit-comment");
 
   $showRequestCommentContainerTrigger.on("click", function () {
     $showRequestCommentContainerTrigger.hide();
@@ -87,10 +42,9 @@ $(document).ready(function () {
     $commentContainerTextarea.focus();
   });
 
-  // Mark as solved button
   var $requestMarkAsSolvedButton = $(".request-container .mark-as-solved:not([data-disabled])"),
-    $requestMarkAsSolvedCheckbox = $(".request-container .comment-container input[type=checkbox]"),
-    $requestCommentSubmitButton = $(".request-container .comment-container input[type=submit]");
+      $requestMarkAsSolvedCheckbox = $(".request-container .comment-container input[type=checkbox]"),
+      $requestCommentSubmitButton = $(".request-container .comment-container input[type=submit]");
 
   $requestMarkAsSolvedButton.on("click", function () {
     $requestMarkAsSolvedCheckbox.attr("checked", true);
@@ -98,9 +52,7 @@ $(document).ready(function () {
     $(this).attr("data-disabled", true).closest("form").submit();
   });
 
-  // Change Mark as solved text according to whether comment is filled
   var $requestCommentTextarea = $(".request-container .comment-container textarea");
-
   $requestCommentTextarea.on("input", function () {
     if ($requestCommentTextarea.val() !== "") {
       $requestMarkAsSolvedButton.text($requestMarkAsSolvedButton.data("solve-and-submit-translation"));
@@ -110,24 +62,10 @@ $(document).ready(function () {
       $requestCommentSubmitButton.prop("disabled", true);
     }
   });
+  if ($requestCommentTextarea.val() === "") { $requestCommentSubmitButton.prop("disabled", true); }
 
-  // Disable submit button if textarea is empty
-  if ($requestCommentTextarea.val() === "") {
-    $requestCommentSubmitButton.prop("disabled", true);
-  }
-
-  // Submit requests filter form in the request list page
-  $("#request-status-select, #request-organization-select")
-    .on("change", function () {
-      search();
-    });
-
-  // Submit requests filter form in the request list page
-  $("#quick-search").on("keypress", function (e) {
-    if (e.which === 13) {
-      search();
-    }
-  });
+  $("#request-status-select, #request-organization-select").on("change", function () { search(); });
+  $("#quick-search").on("keypress", function (e) { if (e.which === 13) search(); });
 
   function search() {
     window.location.search = $.param({
@@ -143,105 +81,277 @@ $(document).ready(function () {
     menu.setAttribute("aria-expanded", !isExpanded);
     toggleElement.setAttribute("aria-expanded", !isExpanded);
   }
-
-  $(".header .icon-menu").on("click", function (e) {
-    e.stopPropagation();
-    toggleNavigation(this);
-  });
-
-  $(".header .icon-menu").on("keyup", function (e) {
-    if (e.keyCode === 13) { // Enter key
-      e.stopPropagation();
-      toggleNavigation(this);
-    }
-  });
-
+  $(".header .icon-menu").on("click", function (e) { e.stopPropagation(); toggleNavigation(this); });
+  $(".header .icon-menu").on("keyup", function (e) { if (e.keyCode === 13) { e.stopPropagation(); toggleNavigation(this); } });
   $("#user-nav").on("keyup", function (e) {
-    if (e.keyCode === 27) { // Escape key
-      e.stopPropagation();
-      this.setAttribute("aria-expanded", false);
-      $(".header .icon-menu").attr("aria-expanded", false);
-    }
+    if (e.keyCode === 27) { e.stopPropagation(); this.setAttribute("aria-expanded", false); $(".header .icon-menu").attr("aria-expanded", false); }
   });
+  if ($("#user-nav").children().length === 0) { $(".header .icon-menu").hide(); }
 
-  if ($("#user-nav").children().length === 0) {
-    $(".header .icon-menu").hide();
-  }
+  $("#request-organization select").on("change", function () { this.form.submit(); });
+  $(".collapsible-nav, .collapsible-sidebar").on("click", function (e) { e.stopPropagation(); var isExpanded = this.getAttribute("aria-expanded") === "true"; this.setAttribute("aria-expanded", !isExpanded); });
+});
 
-  // Submit organization form in the request page
-  $("#request-organization select").on("change", function () {
-    this.form.submit();
-  });
+/* ===========================================================
+ * New-hire form logic for ticket form 40202845830427
+ * ===========================================================
+ */
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof ticketForm === 'undefined' || ticketForm != 40202845830427) return;
 
-  // Toggles expanded aria to collapsible elements
-  $(".collapsible-nav, .collapsible-sidebar").on("click", function (e) {
-    e.stopPropagation();
-    var isExpanded = this.getAttribute("aria-expanded") === "true";
-    this.setAttribute("aria-expanded", !isExpanded);
-  });
-  //Hide and auto-fill subject and description line on the New User Request form//
-  var ticketForm = location.search.split('ticket_form_id=')[1];
-
-  if (ticketForm == 40202845830427) {
-  $('.form-field.string.optional.request_subject').hide();// Hide subject 
-  $('.form-field.string.required.request_subject').hide(); // Hide subject
- $('.form-field.string.optional.request_subject, .form-field.string.required.request_subject').hide();
-  $('.form-field.request_description').hide(); // Hide description
-
-  const FIELD = {
+  // Custom field IDs (from your list)
+  const ID = {
+    // identity & org
     firstName: '41134679554331',
     lastName:  '41134723405595',
-    startDate: '41134762486555'
+    title:     '41134724350107',
+    dept:      '41134726133275',
+    startDate: '41134762486555',
+    reportsTo: '41134776240411',
+    officePhone: '41134772943259',
+    cellPhone:   '41134746346907',
+
+    // email
+    needsEmail:     '41134919788827',   // dropdown
+    prefNewEmail:   '41134940312091',
+    existingEmail:  '41134950735899',
+    replacingYN:    '41134970741659',   // dropdown
+    replacingWho:   '41135043430427',
+    existingStill:  '41135204750107',   // dropdown Yes/No
+
+    // computer
+    willUseCompany: '41134825610779',   // dropdown
+    newOrExisting:  '41134868476315',   // dropdown
+    existingPCName: '41134891429147',
+
+    // access
+    standardApps:   '41135512540955',   // multi-select
+    sharedDrives:   '41135376583195',   // multiline
+    distGroups:     '41135508887323',   // multiline
+    printers:       '41135538769307',   // multiline
+    secGroups:      '41135540022427',   // multiline
+
+    // lookups & misc
+    userStandards:  '41134147290523',   // lookup
+    service:        '41140632676379',   // lookup
+    comments:       '41135548344219'    // multiline
   };
 
-  function getVal(fid) {
-    const el = document.querySelector(`#request_custom_fields_${fid}`);
-    return el && el.value ? el.value.trim() : '';
-  }
+  // Link to termination form (Support subdomain)
+  const terminationFormURL = 'https://support.upicsolutions.zendesk.com/hc/en-us/requests/new?ticket_form_id=XXXXXX';
 
-  function prettyDate(iso) {
+  // Selectors for Garden inputs
+  const qSubject = 'input[name="request[subject]"]';
+  const qDescription = 'textarea[name="request[description]"]';
+
+  // ---------- helpers ----------
+  const $  = (s) => document.querySelector(s);
+  const el = (fid) => $(`#request_custom_fields_${fid}`);
+  const val = (fid) => { const n = el(fid); return n && typeof n.value === 'string' ? n.value.trim() : ''; };
+  const datePretty = (iso) => {
     if (!iso) return '';
     const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'2-digit' });
-  }
-
-  function buildFields() {
-    const first = getVal(FIELD.firstName);
-    const last  = getVal(FIELD.lastName);
-    const start = prettyDate(getVal(FIELD.startDate));
-
-    let subjectParts = [];
-    if (first || last) subjectParts.push(`New User: ${first} ${last}`.trim());
-    if (start) subjectParts.push(`Start ${start}`);
-    const subject = subjectParts.join(' | ');
-
-    // Build a description message - adjust as needed
-    let description = `Request for new user ${first} ${last}`;
-    if (start) {
-      description += ` starting on ${start}.`;
-    } else {
-      description += `.`;
+    return isNaN(d) ? iso : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+  };
+  const dropdownLabel = (fid) => {
+    const n = el(fid);
+    if (!n) return '';
+    if (n.tagName === 'SELECT' && !n.multiple) {
+      const opt = n.options[n.selectedIndex];
+      return opt ? (opt.text || '').trim() : '';
     }
-    description += ' Please set up all access and accounts needed.';
-
-    // Set the fields
-    if (subject) $('#request_subject').val(subject);
-    if (description) $('#request_description').val(description);
+    return (n.value || '').trim();
+  };
+  const multiSelectLabels = (fid) => {
+    const n = el(fid);
+    if (!n || !n.options) return '';
+    return Array.from(n.options).filter(o => o.selected).map(o => (o.text || '').trim()).filter(Boolean).join(', ');
+  };
+  function hideGardenField(ctrl) {
+    if (!ctrl) return;
+    const wrap = ctrl.closest('[data-garden-id="forms.field"]');
+    if (wrap) { wrap.hidden = true; return; }
+    ctrl.hidden = true;
+    const lbl = ctrl.getAttribute('aria-labelledby');
+    if (lbl) { const l = document.getElementById(lbl); if (l) l.hidden = true; }
   }
 
-  // Wire events
-  [`#request_custom_fields_${FIELD.firstName}`,
-   `#request_custom_fields_${FIELD.lastName}`,
-   `#request_custom_fields_${FIELD.startDate}`].forEach(sel => {
-     $(document).on('input change', sel, buildFields);
+  // ---------- headings ----------
+  function insertHeading(beforeSelector, text) {
+    const node = $(beforeSelector);
+    if (!node) return;
+    const h = document.createElement('div');
+    h.className = 'custom-section-heading';
+    h.textContent = text;
+    node.parentNode.insertBefore(h, node);
+  }
+  function addHeadings() {
+    insertHeading(`#request_custom_fields_${ID.firstName}`, 'NEW EMPLOYEE INFORMATION');
+    insertHeading(`#request_custom_fields_${ID.willUseCompany}`, 'COMPUTER SETUP INFORMATION');
+  }
+
+  // ---------- termination notice (if existing user still employed == No) ----------
+  function ensureTerminationNotice() {
+    const host = el(ID.existingStill);
+    if (!host || $('#termination-notice')) return;
+    const msg = document.createElement('div');
+    msg.id = 'termination-notice';
+    msg.className = 'termination-note';
+    msg.style.display = 'none';
+    msg.innerHTML = `If "No", please fill out the <a href="${terminationFormURL}" target="_blank" rel="noopener noreferrer">Employee Termination Form</a> (if applicable).<br>Note: The form will open in a new window.`;
+    host.parentNode.insertBefore(msg, host.nextSibling);
+  }
+  function updateTerminationNotice() {
+    const n = el(ID.existingStill);
+    const note = $('#termination-notice');
+    if (!n || !note) return;
+    note.style.display = ((n.value || '').toLowerCase() === 'no') ? 'block' : 'none';
+  }
+
+  // ---------- subject + formatted description ----------
+  function buildTexts() {
+    // Identity
+    const fn  = val(ID.firstName);
+    const ln  = val(ID.lastName);
+    const ttl = val(ID.title);
+    const dep = val(ID.dept);
+    const sd  = datePretty(val(ID.startDate));
+    const mgr = val(ID.reportsTo);
+    const phO = val(ID.officePhone);
+    const phC = val(ID.cellPhone);
+    const stds= dropdownLabel(ID.userStandards);
+    const svc = dropdownLabel(ID.service);
+
+    // Email
+    const needsEmail  = dropdownLabel(ID.needsEmail);
+    const prefEmail   = val(ID.prefNewEmail);
+    const existEmail  = val(ID.existingEmail);
+    const replYN      = dropdownLabel(ID.replacingYN);
+    const replWho     = val(ID.replacingWho);
+    const stillEmp    = dropdownLabel(ID.existingStill);
+
+    // Computer
+    const compUse     = dropdownLabel(ID.willUseCompany);
+    const newOrExist  = dropdownLabel(ID.newOrExisting);
+    const pcName      = val(ID.existingPCName);
+
+    // Access
+    const apps        = multiSelectLabels(ID.standardApps);
+    const drives      = val(ID.sharedDrives);
+    const groups      = val(ID.distGroups);
+    const printers    = val(ID.printers);
+    const secGroups   = val(ID.secGroups);
+
+    // Misc
+    const notes       = val(ID.comments);
+
+    // Subject
+    const subjParts = [];
+    if (fn || ln) subjParts.push(`New User: ${[fn, ln].filter(Boolean).join(' ')}`);
+    if (sd)       subjParts.push(`Start ${sd}`);
+    const subject = subjParts.join(' | ');
+
+    // Helpers for description blocks
+    const line = (k, v) => v ? `- ${k}: ${v}` : '';
+    const block = (hdr, rows) => {
+      const inner = rows.filter(Boolean).join('\n');
+      return inner ? `${hdr}\n${inner}\n` : '';
+    };
+
+    const desc =
+      block('NEW EMPLOYEE', [
+        line('Name', [fn, ln].filter(Boolean).join(' ')),
+        line('Title', ttl),
+        line('Department', dep),
+        line('Start Date', sd),
+        line('Manager (Reports To)', mgr),
+        line('Office/Direct Phone', phO),
+        line('Cell Phone', phC),
+        line('User Standards & Exceptions', stds),
+        line('Service', svc)
+      ]) +
+      '---\n' +
+      block('EMAIL', [
+        line('Needs Email Setup', needsEmail),
+        line('Preferred New Email', prefEmail),
+        line('Existing Email', existEmail),
+        line('Replacing Existing User', replYN),
+        line("Existing User's Name", replWho),
+        line('Is Existing User Still Employed', stillEmp)
+      ]) +
+      '---\n' +
+      block('COMPUTER', [
+        line('Company Computer', compUse),
+        line('New or Existing Computer', newOrExist),
+        line('Existing Computer Name', pcName)
+      ]) +
+      '---\n' +
+      block('ACCESS', [
+        line('Standard Applications', apps),
+        line('Shared Drives', drives),
+        line('Distribution Groups', groups),
+        line('Printers & Scanners', printers),
+        line('Security Group Access', secGroups)
+      ]) +
+      (notes ? `---\nNOTES\n${notes}\n` : '');
+
+    // Apply + hide using Garden-safe wrappers
+    const subjEl = $(qSubject);
+    if (subjEl) { subjEl.value = subject || ''; hideGardenField(subjEl); }
+    const descEl = $(qDescription);
+    if (descEl) { descEl.value = desc.trim(); hideGardenField(descEl); }
+  }
+
+  // ---------- wire events ----------
+  function wire() {
+    [
+      ID.firstName, ID.lastName, ID.title, ID.dept, ID.startDate, ID.reportsTo,
+      ID.officePhone, ID.cellPhone, ID.userStandards, ID.service,
+      ID.needsEmail, ID.prefNewEmail, ID.existingEmail, ID.replacingYN, ID.replacingWho, ID.existingStill,
+      ID.willUseCompany, ID.newOrExisting, ID.existingPCName,
+      ID.standardApps, ID.sharedDrives, ID.distGroups, ID.printers, ID.secGroups,
+      ID.comments
+    ].forEach(fid => {
+      const n = el(fid);
+      if (n) { n.addEventListener('input', buildTexts); n.addEventListener('change', buildTexts); }
+    });
+
+    const still = el(ID.existingStill);
+    if (still) { still.addEventListener('input', updateTerminationNotice); still.addEventListener('change', updateTerminationNotice); }
+  }
+
+  // ---------- one-time CSS ----------
+  (function injectCSS() {
+    if ($('#_custom_form_css')) return;
+    const style = document.createElement('style');
+    style.id = '_custom_form_css';
+    style.textContent = `
+      .custom-section-heading {
+        margin-top: 20px; margin-bottom: 10px;
+        font-size: 1.1rem; font-weight: 700;
+        border-bottom: 1px solid #ddd; padding-bottom: 4px;
+      }
+      .termination-note {
+        margin: 12px 0; padding: 10px;
+        background: #fff3cd; border: 1px solid #ffe58f; border-radius: 4px;
+      }
+    `;
+    document.head.appendChild(style);
+  })();
+
+  // ---------- first pass ----------
+  addHeadings();
+  ensureTerminationNotice();
+  buildTexts();
+  updateTerminationNotice();
+  wire();
+
+  // Keep it sticky across async re-renders
+  const mo = new MutationObserver(() => {
+    addHeadings();
+    ensureTerminationNotice();
+    buildTexts();
+    updateTerminationNotice();
   });
-
-  // Initial call
-  buildFields();
-
-  // Optional: fallback / mutation observer in case form loads dynamic parts
-  const mo = new MutationObserver(() => buildFields());
   mo.observe(document.body, { childList: true, subtree: true });
-  }
 });
