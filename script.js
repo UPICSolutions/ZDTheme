@@ -251,6 +251,38 @@ $(function () {
     // Extra safety (some themes use these wrappers)
     $('.request_subject, .request_description').hide();
   }
+  // --- PATCH: hide Subject + Description on legacy Guide form ---
+function hideLegacySubjectDescription() {
+  // 1) Target the actual controls
+  var $subj = $('#request_subject');
+  var $desc = $('#request_description');
+
+  // 2) Hide their standard wrappers (classic Guide = .form-field.*)
+  if ($subj.length) {
+    $subj.closest('.form-field').hide(); // covers .form-field.string.*.request_subject
+  }
+  if ($desc.length) {
+    $desc.closest('.form-field').hide(); // covers .form-field.request_description
+  }
+
+  // 3) Extra belt & suspenders (some themes add alt wrappers)
+  $('.form-field.string.optional.request_subject, .form-field.string.required.request_subject, .form-field.request_description, .request_subject, .request_description').hide();
+}
+
+// Run once when your form logic runs
+hideLegacySubjectDescription();
+
+// Keep it hidden on any async re-render
+const __hideObserver = new MutationObserver(hideLegacySubjectDescription);
+__hideObserver.observe(document.body, { childList: true, subtree: true });
+
+// Gentle retries for slow loads
+let __tries = 0;
+const __iv = setInterval(function() {
+  hideLegacySubjectDescription();
+  if (++__tries > 10) clearInterval(__iv);
+}, 250);
+
 
   // ---- CSS for headings/notice ----
   (function injectCSS(){
