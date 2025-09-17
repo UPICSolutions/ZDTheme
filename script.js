@@ -3,83 +3,31 @@
  */
 
 $(document).ready(function () {
-  // Upic Added - Scroll to top
-  // browser window scroll (in pixels) after which the "back to top" link is shown
-  // var offset = 300,
-  // browser window scroll (in pixels) after which the "back to top" link opacity is reduced
-  // offset_opacity = 1200,
-  // duration of the top scrolling animation (in ms)
-  // scroll_top_duration = 700,
-  // grab the "back to top" link
-  // $back_to_top = $('.cd-top');
-
-  //hide or show the "back to top" link
-  //$(window).scroll(function(){
-  //( $(this).scrollTop() > offset ) ? $back_to_top.addClass('cd-is-visible') : $back_to_top.removeClass('cd-is-visible cd-fade-out');
-  //if( $(this).scrollTop() > offset_opacity ) { 
-  //$back_to_top.addClass('cd-fade-out');
-  //}
-  //});
-
-  //smooth scroll to top
-  //$back_to_top.on('click', function(event){
-  //event.preventDefault();
-  //$('body,html').animate({
-  //scrollTop: 0 ,
-  //}, scroll_top_duration
-  //);
-  //});
-  // Upic Added - MW-Notification Banner
+  // ===== Upic: MW-Notification Banner =====
   $.get("/api/v2/help_center/" + $('html').attr('lang').toLowerCase() + "/articles.json?label_names=alert").done(function (data) {
-
     $.each(data.articles, function (index, item) {
-
-      var style1 = '<div class="ns-box ns-bar ns-effect-slidetop ns-type-notice ns-show"><div class="ns-box-inner"><span class="megaphone"></span></i><p><a href="' + item.html_url + '">' + item.title + '</a>' + item.body + '</p></div><span class="ns-close"></span></div>'
-
+      var style1 = '<div class="ns-box ns-bar ns-effect-slidetop ns-type-notice ns-show"><div class="ns-box-inner"><span class="megaphone"></span></i><p><a href="' + item.html_url + '">' + item.title + '</a>' + item.body + '</p></div><span class="ns-close"></span></div>';
       $('.alertbox').append(style1);
     });
-    $('.ns-close').on('click', function () {
-      $(".alertbox").remove();
-    });
-
+    $('.ns-close').on('click', function () { $(".alertbox").remove(); });
   });
-  // Upic Added - Change string for My Activities
+
+  // ===== Upic: UI text tweaks =====
   $('.nav-wrapper .dropdown-menu .my-activities').html('See my tickets');
-  $('.sub-nav').find('li').filter(":last");
-
-  //Upic Added - Change string for Search bar 
   $('#query').attr('placeholder', 'Hi, how can we help?');
-
-  //Upic Added - Change string for Search bar signed in users
   if (HelpCenter.user.role != 'anonymous') {
-    $('#query')
-      .attr('placeholder',
-        'Hi ' + HelpCenter.user.name.split(" ")[0] + ', how can we help?');
+    $('#query').attr('placeholder', 'Hi ' + HelpCenter.user.name.split(" ")[0] + ', how can we help?');
   }
 
-  // social share popups
-  $(".share a").click(function (e) {
-    e.preventDefault();
-    window.open(this.href, "", "height = 500, width = 500");
-  });
-
-  // show form controls when the textarea receives focus or backbutton is used and value exists
+  // ===== Request page interactions (kept) =====
   var $commentContainerTextarea = $(".comment-container textarea"),
-    $commentContainerFormControls = $(".comment-form-controls, .comment-ccs");
+      $commentContainerFormControls = $(".comment-form-controls, .comment-ccs");
+  $commentContainerTextarea.one("focus", function () { $commentContainerFormControls.show(); });
+  if ($commentContainerTextarea.val() !== "") { $commentContainerFormControls.show(); }
 
-  $commentContainerTextarea.one("focus", function () {
-    $commentContainerFormControls.show();
-  });
-
-  if ($commentContainerTextarea.val() !== "") {
-    $commentContainerFormControls.show();
-  }
-
-  // Expand Request comment form when Add to conversation is clicked
   var $showRequestCommentContainerTrigger = $(".request-container .comment-container .comment-show-container"),
-    $requestCommentFields = $(".request-container .comment-container .comment-fields"),
-    $requestCommentSubmit = $(".request-container .comment-container .request-submit-comment");
-
+      $requestCommentFields = $(".request-container .comment-container .comment-fields"),
+      $requestCommentSubmit = $(".request-container .comment-container .request-submit-comment");
   $showRequestCommentContainerTrigger.on("click", function () {
     $showRequestCommentContainerTrigger.hide();
     $requestCommentFields.show();
@@ -87,20 +35,16 @@ $(document).ready(function () {
     $commentContainerTextarea.focus();
   });
 
-  // Mark as solved button
   var $requestMarkAsSolvedButton = $(".request-container .mark-as-solved:not([data-disabled])"),
-    $requestMarkAsSolvedCheckbox = $(".request-container .comment-container input[type=checkbox]"),
-    $requestCommentSubmitButton = $(".request-container .comment-container input[type=submit]");
-
+      $requestMarkAsSolvedCheckbox = $(".request-container .comment-container input[type=checkbox]"),
+      $requestCommentSubmitButton = $(".request-container .comment-container input[type=submit]");
   $requestMarkAsSolvedButton.on("click", function () {
     $requestMarkAsSolvedCheckbox.attr("checked", true);
     $requestCommentSubmitButton.prop("disabled", true);
     $(this).attr("data-disabled", true).closest("form").submit();
   });
 
-  // Change Mark as solved text according to whether comment is filled
   var $requestCommentTextarea = $(".request-container .comment-container textarea");
-
   $requestCommentTextarea.on("input", function () {
     if ($requestCommentTextarea.val() !== "") {
       $requestMarkAsSolvedButton.text($requestMarkAsSolvedButton.data("solve-and-submit-translation"));
@@ -110,25 +54,10 @@ $(document).ready(function () {
       $requestCommentSubmitButton.prop("disabled", true);
     }
   });
+  if ($requestCommentTextarea.val() === "") { $requestCommentSubmitButton.prop("disabled", true); }
 
-  // Disable submit button if textarea is empty
-  if ($requestCommentTextarea.val() === "") {
-    $requestCommentSubmitButton.prop("disabled", true);
-  }
-
-  // Submit requests filter form in the request list page
-  $("#request-status-select, #request-organization-select")
-    .on("change", function () {
-      search();
-    });
-
-  // Submit requests filter form in the request list page
-  $("#quick-search").on("keypress", function (e) {
-    if (e.which === 13) {
-      search();
-    }
-  });
-
+  $("#request-status-select, #request-organization-select").on("change", function () { search(); });
+  $("#quick-search").on("keypress", function (e) { if (e.which === 13) { search(); } });
   function search() {
     window.location.search = $.param({
       query: $("#quick-search").val(),
@@ -141,60 +70,36 @@ $(document).ready(function () {
     var menu = document.getElementById("user-nav");
     var isExpanded = menu.getAttribute("aria-expanded") === "true";
     menu.setAttribute("aria-expanded", !isExpanded);
+    toggleNavigation.element = toggleElement;
     toggleElement.setAttribute("aria-expanded", !isExpanded);
   }
-
-  $(".header .icon-menu").on("click", function (e) {
-    e.stopPropagation();
-    toggleNavigation(this);
-  });
-
-  $(".header .icon-menu").on("keyup", function (e) {
-    if (e.keyCode === 13) { // Enter key
-      e.stopPropagation();
-      toggleNavigation(this);
-    }
-  });
-
+  $(".header .icon-menu").on("click", function (e) { e.stopPropagation(); toggleNavigation(this); });
+  $(".header .icon-menu").on("keyup", function (e) { if (e.keyCode === 13) { e.stopPropagation(); toggleNavigation(this); } });
   $("#user-nav").on("keyup", function (e) {
-    if (e.keyCode === 27) { // Escape key
-      e.stopPropagation();
-      this.setAttribute("aria-expanded", false);
-      $(".header .icon-menu").attr("aria-expanded", false);
-    }
+    if (e.keyCode === 27) { e.stopPropagation(); this.setAttribute("aria-expanded", false); $(".header .icon-menu").attr("aria-expanded", false); }
   });
-
-  if ($("#user-nav").children().length === 0) {
-    $(".header .icon-menu").hide();
-  }
-
-  // Submit organization form in the request page
-  $("#request-organization select").on("change", function () {
-    this.form.submit();
-  });
-
-  // Toggles expanded aria to collapsible elements
+  if ($("#user-nav").children().length === 0) { $(".header .icon-menu").hide(); }
+  $("#request-organization select").on("change", function () { this.form.submit(); });
   $(".collapsible-nav, .collapsible-sidebar").on("click", function (e) {
     e.stopPropagation();
     var isExpanded = this.getAttribute("aria-expanded") === "true";
     this.setAttribute("aria-expanded", !isExpanded);
   });
 
-  //Hide and auto-fill subject and description line on the New User Request form//
+  // ===== New User Request form logic (classic markup) =====
   var ticketForm = location.search.split('ticket_form_id=')[1];
-
   if (ticketForm == 40202845830427) {
-    $('.form-field.string.optional.request_subject').hide();// Hide subject 
-    $('.form-field.string.required.request_subject').hide(); // Hide subject
+    // Hide Subject & Description (classic wrappers)
     $('.form-field.string.optional.request_subject, .form-field.string.required.request_subject').hide();
-    $('.form-field.request_description').hide(); // Hide description
+    $('.form-field.request_description').hide();
 
-    // --- helpers ---
+    // ---------- Helpers ----------
     function getVal(fid) {
       var el = document.querySelector('#request_custom_fields_' + fid);
       return el && el.value ? el.value.trim() : '';
     }
-    function getDDLabel(fid) { // read human-friendly option text
+    // Display title for dropdown/lookup (vs backend tag)
+    function getDDLabel(fid) {
       var el = document.querySelector('#request_custom_fields_' + fid);
       if (!el) return '';
       if (el.tagName === 'SELECT' && !el.multiple) {
@@ -203,20 +108,34 @@ $(document).ready(function () {
       }
       return el.value ? el.value.trim() : '';
     }
+    // Multi-select labels (works for <select multiple> or checkbox groups)
     function getMultiLabels(fid) {
       var el = document.querySelector('#request_custom_fields_' + fid);
-      if (!el || !el.options) return '';
-      var labels = Array.prototype.slice.call(el.options)
-        .filter(function (o) { return o.selected; })
-        .map(function (o) { return (o.text || '').trim(); })
-        .filter(Boolean);
-      return labels.join(', ');
+
+      // Case A: <select multiple>
+      if (el && el.tagName === 'SELECT' && el.multiple && el.options) {
+        return Array.prototype.slice.call(el.options)
+          .filter(function (o) { return o.selected; })
+          .map(function (o) { return (o.text || '').trim(); })
+          .filter(Boolean).join(', ');
+      }
+
+      // Case B: checkbox list (theme may render this way)
+      var boxes = document.querySelectorAll('input[type="checkbox"][name="request[custom_fields][' + fid + '][]"]:checked');
+      if (boxes && boxes.length) {
+        return Array.prototype.slice.call(boxes)
+          .map(function (cb) {
+            var lbl = document.querySelector('label[for="' + cb.id + '"]');
+            return ((lbl && lbl.textContent) ? lbl.textContent : cb.value).trim();
+          })
+          .filter(Boolean).join(', ');
+      }
+      return '';
     }
     function prettyDate(iso) {
       if (!iso) return '';
       var d = new Date(iso);
-      if (isNaN(d.getTime())) return iso;
-      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+      return isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
     }
     function line(label, value) { return value ? ('- ' + label + ': ' + value) : ''; }
     function block(title, lines) {
@@ -224,7 +143,7 @@ $(document).ready(function () {
       return inner ? (title + '\n' + inner + '\n') : '';
     }
 
-    // --- build fields (all IDs you provided) ---
+    // ---------- Build & apply ----------
     function buildFields() {
       // Identity & Org
       var first = getVal('41134679554331');
@@ -252,22 +171,22 @@ $(document).ready(function () {
       var existingPCName = getVal('41134891429147');
 
       // Access
-      var standardApps = getMultiLabels('41135512540955');
+      var standardApps = getMultiLabels('41135512540955'); // robust
       var sharedDrives = getVal('41135376583195');
       var distGroups   = getVal('41135508887323');
       var printers     = getVal('41135538769307');
       var secGroups    = getVal('41135540022427');
 
-      // Misc
+      // Notes
       var comments = getVal('41135548344219');
 
       // Subject
-      var subjectParts = [];
-      if (first || last) subjectParts.push(('New User: ' + (first + ' ' + last)).trim());
-      if (start) subjectParts.push('Start ' + start);
-      var subject = subjectParts.join(' | ');
+      var subject = [
+        (first || last) ? ('New User: ' + [first, last].filter(Boolean).join(' ')) : '',
+        start ? ('Start ' + start) : ''
+      ].filter(Boolean).join(' | ');
 
-      // Description (structured)
+      // Description
       var description =
         block('NEW EMPLOYEE', [
           line('Name', [first, last].filter(Boolean).join(' ')),
@@ -305,19 +224,22 @@ $(document).ready(function () {
         ]) +
         (comments ? ('---\nNOTES\n' + comments + '\n') : '');
 
-      // Apply
       if (subject) $('#request_subject').val(subject);
       if (description) $('#request_description').val(description.trim());
     }
 
-    // Wire events: any custom field change rebuilds
-    $(document).on('input change', '[id^=request_custom_fields_]', buildFields);
+    // Rebuild on any custom field change (inputs, selects, checkboxes)
+    $(document).on('input change',
+      '[id^=request_custom_fields_], input[type="checkbox"][name^="request[custom_fields]"]',
+      buildFields
+    );
 
-    // Initial call
+    // Initial pass + keep alive across async renders
     buildFields();
-
-    // Keep fresh if the form re-renders dynamically
     var mo = new MutationObserver(function(){ buildFields(); });
     mo.observe(document.body, { childList: true, subtree: true });
+
+    // Extra retries in slow loads
+    var tries = 0, iv = setInterval(function(){ buildFields(); if (++tries > 10) clearInterval(iv); }, 250);
   }
 });
