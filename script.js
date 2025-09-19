@@ -21,14 +21,14 @@ $(document).ready(function () {
 
   // ===== Request page interactions (kept) =====
   var $commentContainerTextarea = $(".comment-container textarea"),
-      $commentContainerFormControls = $(".comment-form-controls, .comment-ccs");
+    $commentContainerFormControls = $(".comment-form-controls, .comment-ccs");
 
   $commentContainerTextarea.one("focus", function () { $commentContainerFormControls.show(); });
   if ($commentContainerTextarea.val() !== "") { $commentContainerFormControls.show(); }
 
   var $showRequestCommentContainerTrigger = $(".request-container .comment-container .comment-show-container"),
-      $requestCommentFields = $(".request-container .comment-container .comment-fields"),
-      $requestCommentSubmit = $(".request-container .comment-container .request-submit-comment");
+    $requestCommentFields = $(".request-container .comment-container .comment-fields"),
+    $requestCommentSubmit = $(".request-container .comment-container .request-submit-comment");
   $showRequestCommentContainerTrigger.on("click", function () {
     $showRequestCommentContainerTrigger.hide();
     $requestCommentFields.show();
@@ -37,8 +37,8 @@ $(document).ready(function () {
   });
 
   var $requestMarkAsSolvedButton = $(".request-container .mark-as-solved:not([data-disabled])"),
-      $requestMarkAsSolvedCheckbox = $(".request-container .comment-container input[type=checkbox]"),
-      $requestCommentSubmitButton = $(".request-container .comment-container input[type=submit]");
+    $requestMarkAsSolvedCheckbox = $(".request-container .comment-container input[type=checkbox]"),
+    $requestCommentSubmitButton = $(".request-container .comment-container input[type=submit]");
   $requestMarkAsSolvedButton.on("click", function () {
     $requestMarkAsSolvedCheckbox.attr("checked", true);
     $requestCommentSubmitButton.prop("disabled", true);
@@ -86,66 +86,92 @@ $(document).ready(function () {
     this.setAttribute("aria-expanded", !isExpanded);
   });
 
-// Show a specific form ONLY if the user has a required org tag.
-// Otherwise, remove that form from the dropdown.
+  // Hide a specific form unless the user/org has a required tag
 (function () {
-  var TARGET_FORM_ID = '41140600277275';   // <-- the form ID to protect
-  var REQUIRED_TAG   = 'synced_crm_lite';             // <-- the org tag required to see it
+  var PROTECTED_FORM_ID = '41140600277275';
+  var REQUIRED_TAG = 'synced_crm_lite';
 
-  function userHasRequiredTag() {
+  function hasAccessTag() {
     try {
-      var orgs = (window.HelpCenter && HelpCenter.user && HelpCenter.user.organizations) || [];
+      var u = (window.HelpCenter && HelpCenter.user) || {};
+      var userTags = u.tags || [];
+      if (userTags.indexOf(REQUIRED_TAG) !== -1) return true;
+
+      var orgs = u.organizations || [];
       return orgs.some(function (org) {
-        return (org.tags || []).indexOf(REQUIRED_TAG) !== -1;
+        var t = (org && org.tags) || [];
+        return t.indexOf(REQUIRED_TAG) !== -1;
       });
     } catch (e) {
       return false;
     }
   }
 
-  function removeTargetForm() {
-    var $select = $('#request_issue_type_select');
-    if ($select.length === 0) return;
-
-    // If the protected form is selected, switch to a different option first.
-    if ($select.val() === TARGET_FORM_ID) {
-      var $fallback = $select.find("option").not("[value='" + TARGET_FORM_ID + "']").first();
-      if ($fallback.length) {
-        $select.val($fallback.val()).trigger('change');
-      }
-    }
-
-    // Remove option from the native select
-    $select.find("option[value='" + TARGET_FORM_ID + "']").remove();
-
-    // Remove from the legacy "nesty" dropdown panel if present
-    $(".nesty-panel ul li[data-value='" + TARGET_FORM_ID + "']").remove();
-
-    // If nothing left to pick, hide the selector row to avoid confusion
-    if ($select.find("option").length === 0) {
-      // Tweak these selectors to your theme if needed
-      $('.request_ticket_form_id').closest('.form-field, .form').hide();
-    }
+  function getActiveFormId() {
+    var params = new URLSearchParams(window.location.search);
+    var fromUrl = params.get('ticket_form_id');
+    var fromSelect = $('#request_issue_type_select').val();
+    return (fromSelect && String(fromSelect)) || (fromUrl && String(fromUrl)) || '';
   }
 
-  function init() {
-    var allow = userHasRequiredTag();
-    var tries = 0;
+  function removeProtectedForm() {
+    var $select = $('#request_issue_type_select');
 
-    // Wait for Zendesk to render the form selector
+    // If the select exists and the protected one is active, switch first
+    if ($select.length) {
+      if ($select.val() === PROTECTED_FORM_ID) {
+        var $fallback = $select.find('option').not("[value='" + PROTECTED_FORM_ID + "']").first();
+        if ($fallback.length) {
+          $select.val($fallback.val()).trigger('change');
+        } else {
+          // No fallback available. Hide the entire form area to avoid a dead end
+          $('.request_ticket_form_id').closest('.form-field, .form, form').hide();
+          return;
+        }
+      }
+      // Remove the protected option
+      $select.find("option[value='" + PROTECTED_FORM_ID + "']").remove();
+    }
+
+    // Clean up legacy "nesty" menu mirrors if present
+    $(".nesty-panel ul li[data-value='" + PROTECTED_FORM_ID + "']").remove();
+  }
+
+  function initGuard() {
+    // If user has the tag, do nothing
+    if (hasAccessTag()) return;
+
+    // Wait for the form selector to render or for an active form to be detectable
+    var tries = 0;
     var intv = setInterval(function () {
       tries++;
-      var ready = $('#request_issue_type_select').length > 0 || $("a.nesty-input").length > 0;
-      if (ready || tries > 60) {
+      var hasSelect = $('#request_issue_type_select').length > 0;
+      var activeId = getActiveFormId();
+
+      if (hasSelect || activeId || tries > 60) {
         clearInterval(intv);
-        if (!allow) removeTargetForm();
+
+        // If the protected form is already active via URL, bounce to a safe form or hide
+        if (activeId === PROTECTED_FORM_ID) {
+          var $select = $('#request_issue_type_select');
+          if ($select.length) {
+            var $fallback = $select.find('option').not("[value='" + PROTECTED_FORM_ID + "']").first();
+            if ($fallback.length) {
+              $select.val($fallback.val()).trigger('change');
+            } else {
+              $('.request_ticket_form_id').closest('.form-field, .form, form').hide();
+              return;
+            }
+          }
+        }
+        removeProtectedForm();
       }
     }, 200);
   }
 
-  $(init);
+  // Run after DOM ready
+  $(initGuard);
 })();
-
 
   // ===== New User Request form logic (classic markup) =====
   var ticketForm = location.search.split('ticket_form_id=')[1];
@@ -169,7 +195,7 @@ $(document).ready(function () {
       // radios fallback
       var radios = document.querySelectorAll('input[type="radio"][name="request[custom_fields][' + fid + ']"]');
       if (radios && radios.length) {
-        var chosen = Array.prototype.slice.call(radios).find(function(r){ return r.checked; });
+        var chosen = Array.prototype.slice.call(radios).find(function (r) { return r.checked; });
         if (chosen) {
           var lbl = document.querySelector('label[for="' + chosen.id + '"]');
           return (lbl && lbl.textContent ? lbl.textContent : chosen.value).trim();
@@ -211,19 +237,19 @@ $(document).ready(function () {
       if (!root) {
         // Sometimes the widget isn’t adjacent to the hidden <select>. Try data attributes.
         root = document.querySelector('.hc-multiselect-toggle[data-field-id="' + fid + '"]') ||
-               document.querySelector('[data-hc-multiselect-for="' + fid + '"]');
+          document.querySelector('[data-hc-multiselect-for="' + fid + '"]');
       }
       if (root) {
         // Prefer visible chips/pills
         var chips = root.querySelectorAll('.hc-tag, .tag, .hc-multiselect__selection .tag');
-        var chipLabels = Array.prototype.map.call(chips, function(n){ return (n.textContent || '').trim(); }).filter(Boolean);
+        var chipLabels = Array.prototype.map.call(chips, function (n) { return (n.textContent || '').trim(); }).filter(Boolean);
         if (chipLabels.length) return chipLabels.join(', ');
 
         // Otherwise, read from checked items in the menu
         var menuChecks = root.querySelectorAll('input[type="checkbox"]:checked');
         if (menuChecks && menuChecks.length) {
           return Array.prototype.slice.call(menuChecks)
-            .map(function(cb){
+            .map(function (cb) {
               var lbl = root.querySelector('label[for="' + cb.id + '"]');
               return ((lbl && lbl.textContent) ? lbl.textContent : cb.value).trim();
             })
@@ -250,36 +276,36 @@ $(document).ready(function () {
     function buildFields() {
       // Required on your form
       var first = getVal('41134679554331');
-      var last  = getVal('41134723405595');
+      var last = getVal('41134723405595');
       var start = prettyDate(getVal('41134762486555'));
 
       // Optional details (auto-skipped if blank)
       var title = getVal('41134724350107');
-      var dept  = getVal('41134726133275');
-      var reportsTo  = getVal('41134776240411');
-      var officePhone= getVal('41134772943259');
-      var cellPhone  = getVal('41134746346907');
-      var standards  = getDDLabel('41134147290523');
-      var service    = getDDLabel('41140632676379');
+      var dept = getVal('41134726133275');
+      var reportsTo = getVal('41134776240411');
+      var officePhone = getVal('41134772943259');
+      var cellPhone = getVal('41134746346907');
+      var standards = getDDLabel('41134147290523');
+      var service = getDDLabel('41140632676379');
 
-      var needsEmail   = getDDLabel('41134919788827');
+      var needsEmail = getDDLabel('41134919788827');
       var prefNewEmail = getVal('41134940312091');
-      var existingEmail= getVal('41134950735899');
-      var replacingYN  = getDDLabel('41134970741659');
+      var existingEmail = getVal('41134950735899');
+      var replacingYN = getDDLabel('41134970741659');
       var replacingWho = getVal('41135043430427');
-      var existingStill= getDDLabel('41135204750107');
+      var existingStill = getDDLabel('41135204750107');
 
       var willUseCompany = getDDLabel('41134825610779');
-      var newOrExisting  = getDDLabel('41134868476315');
+      var newOrExisting = getDDLabel('41134868476315');
       var existingPCName = getVal('41134891429147');
 
       // Applications (multi)
       var standardApps = getMultiLabels('41135512540955');
 
       var sharedDrives = getVal('41135376583195');
-      var distGroups   = getVal('41135508887323');
-      var printers     = getVal('41135538769307');
-      var secGroups    = getVal('41135540022427');
+      var distGroups = getVal('41135508887323');
+      var printers = getVal('41135538769307');
+      var secGroups = getVal('41135540022427');
 
       var comments = getVal('41135548344219');
 
@@ -346,10 +372,10 @@ $(document).ready(function () {
 
     // Initial pass + keep alive across async renders
     buildFields();
-    var mo = new MutationObserver(function(){ buildFields(); });
+    var mo = new MutationObserver(function () { buildFields(); });
     mo.observe(document.body, { childList: true, subtree: true });
 
     // Gentle retries for slow loads
-    var tries = 0, iv = setInterval(function(){ buildFields(); if (++tries > 10) clearInterval(iv); }, 250);
+    var tries = 0, iv = setInterval(function () { buildFields(); if (++tries > 10) clearInterval(iv); }, 250);
   }
 });
