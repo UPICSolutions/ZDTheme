@@ -86,10 +86,16 @@ $(document).ready(function () {
     this.setAttribute("aria-expanded", !isExpanded);
   });
 
-  // Hide a specific form unless the user/org has a required tag
+// Hide form 41140600277275 unless user/org has tag "synced_crm_lite"
 (function () {
   var PROTECTED_FORM_ID = '41140600277275';
   var REQUIRED_TAG = 'synced_crm_lite';
+
+  // Selectors cover both classic and some customized themes
+  var SELECTORS = [
+    '#request_issue_type_select',
+    'select[name="request[ticket_form_id]"]'
+  ].join(',');
 
   function hasAccessTag() {
     try {
@@ -98,78 +104,96 @@ $(document).ready(function () {
       if (userTags.indexOf(REQUIRED_TAG) !== -1) return true;
 
       var orgs = u.organizations || [];
-      return orgs.some(function (org) {
-        var t = (org && org.tags) || [];
+      return orgs.some(function (o) {
+        var t = (o && o.tags) || [];
         return t.indexOf(REQUIRED_TAG) !== -1;
       });
-    } catch (e) {
-      return false;
-    }
+    } catch (e) { return false; }
   }
 
   function getActiveFormId() {
+    var fromSelect = $(SELECTORS).val();
+    if (fromSelect) return String(fromSelect);
     var params = new URLSearchParams(window.location.search);
     var fromUrl = params.get('ticket_form_id');
-    var fromSelect = $('#request_issue_type_select').val();
-    return (fromSelect && String(fromSelect)) || (fromUrl && String(fromUrl)) || '';
+    return fromUrl ? String(fromUrl) : '';
   }
 
-  function removeProtectedForm() {
-    var $select = $('#request_issue_type_select');
+  function switchOffProtectedIfActive() {
+    var $select = $(SELECTORS).first();
+    if (!$select.length) return;
 
-    // If the select exists and the protected one is active, switch first
-    if ($select.length) {
-      if ($select.val() === PROTECTED_FORM_ID) {
-        var $fallback = $select.find('option').not("[value='" + PROTECTED_FORM_ID + "']").first();
-        if ($fallback.length) {
-          $select.val($fallback.val()).trigger('change');
-        } else {
-          // No fallback available. Hide the entire form area to avoid a dead end
-          $('.request_ticket_form_id').closest('.form-field, .form, form').hide();
-          return;
-        }
+    if ($select.val() === PROTECTED_FORM_ID) {
+      var $fallback = $select.find('option').not("[value='" + PROTECTED_FORM_ID + "']").first();
+      if ($fallback.length) {
+        $select.val($fallback.val()).trigger('change');
+      } else {
+        // No other forms. Hide the whole form row to avoid a dead end.
+        $('.request_ticket_form_id').closest('.form-field, .form, form').hide();
       }
-      // Remove the protected option
+    }
+  }
+
+  function scrubProtectedOption() {
+    var $select = $(SELECTORS).first();
+    if ($select.length) {
+      // Remove from the real select
       $select.find("option[value='" + PROTECTED_FORM_ID + "']").remove();
     }
 
-    // Clean up legacy "nesty" menu mirrors if present
+    // Remove from any currently open nesty panel
     $(".nesty-panel ul li[data-value='" + PROTECTED_FORM_ID + "']").remove();
   }
 
   function initGuard() {
-    // If user has the tag, do nothing
     if (hasAccessTag()) return;
 
-    // Wait for the form selector to render or for an active form to be detectable
+    // Wait for select to exist or for an active form to be detectable
     var tries = 0;
-    var intv = setInterval(function () {
+    var wait = setInterval(function () {
       tries++;
-      var hasSelect = $('#request_issue_type_select').length > 0;
+      var hasSelect = $(SELECTORS).length > 0;
       var activeId = getActiveFormId();
-
       if (hasSelect || activeId || tries > 60) {
-        clearInterval(intv);
+        clearInterval(wait);
 
-        // If the protected form is already active via URL, bounce to a safe form or hide
-        if (activeId === PROTECTED_FORM_ID) {
-          var $select = $('#request_issue_type_select');
-          if ($select.length) {
-            var $fallback = $select.find('option').not("[value='" + PROTECTED_FORM_ID + "']").first();
-            if ($fallback.length) {
-              $select.val($fallback.val()).trigger('change');
-            } else {
-              $('.request_ticket_form_id').closest('.form-field, .form, form').hide();
-              return;
-            }
+        // If protected is already active via URL, switch away first
+        if (activeId === PROTECTED_FORM_ID) switchOffProtectedIfActive();
+
+        // Initial scrub
+        scrubProtectedOption();
+
+        // Re-scrub when the user opens the dropdown (panel is built on demand)
+        $(document).on('click', 'a.nesty-input', function () {
+          // Small delay to allow panel DOM to mount
+          setTimeout(scrubProtectedOption, 0);
+        });
+
+        // Re-scrub on any DOM insert that might rebuild the select or panel
+        var mo = new MutationObserver(function (muts) {
+          // Only do work if relevant nodes appeared
+          var relevant = muts.some(function (m) {
+            return Array.prototype.some.call(m.addedNodes || [], function (n) {
+              if (!(n instanceof HTMLElement)) return false;
+              return n.matches && (n.matches('.nesty-panel') || n.matches(SELECTORS) || n.querySelector(SELECTORS));
+            });
+          });
+          if (relevant) {
+            switchOffProtectedIfActive();
+            scrubProtectedOption();
           }
-        }
-        removeProtectedForm();
+        });
+        mo.observe(document.body, { childList: true, subtree: true });
+
+        // Also scrub after any change to the select value
+        $(document).on('change', SELECTORS, function () {
+          switchOffProtectedIfActive();
+          scrubProtectedOption();
+        });
       }
     }, 200);
   }
 
-  // Run after DOM ready
   $(initGuard);
 })();
 
