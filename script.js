@@ -86,6 +86,67 @@ $(document).ready(function () {
     this.setAttribute("aria-expanded", !isExpanded);
   });
 
+// Show a specific form ONLY if the user has a required org tag.
+// Otherwise, remove that form from the dropdown.
+(function () {
+  var TARGET_FORM_ID = '41140600277275';   // <-- the form ID to protect
+  var REQUIRED_TAG   = 'synced_crm_lite';             // <-- the org tag required to see it
+
+  function userHasRequiredTag() {
+    try {
+      var orgs = (window.HelpCenter && HelpCenter.user && HelpCenter.user.organizations) || [];
+      return orgs.some(function (org) {
+        return (org.tags || []).indexOf(REQUIRED_TAG) !== -1;
+      });
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function removeTargetForm() {
+    var $select = $('#request_issue_type_select');
+    if ($select.length === 0) return;
+
+    // If the protected form is selected, switch to a different option first.
+    if ($select.val() === TARGET_FORM_ID) {
+      var $fallback = $select.find("option").not("[value='" + TARGET_FORM_ID + "']").first();
+      if ($fallback.length) {
+        $select.val($fallback.val()).trigger('change');
+      }
+    }
+
+    // Remove option from the native select
+    $select.find("option[value='" + TARGET_FORM_ID + "']").remove();
+
+    // Remove from the legacy "nesty" dropdown panel if present
+    $(".nesty-panel ul li[data-value='" + TARGET_FORM_ID + "']").remove();
+
+    // If nothing left to pick, hide the selector row to avoid confusion
+    if ($select.find("option").length === 0) {
+      // Tweak these selectors to your theme if needed
+      $('.request_ticket_form_id').closest('.form-field, .form').hide();
+    }
+  }
+
+  function init() {
+    var allow = userHasRequiredTag();
+    var tries = 0;
+
+    // Wait for Zendesk to render the form selector
+    var intv = setInterval(function () {
+      tries++;
+      var ready = $('#request_issue_type_select').length > 0 || $("a.nesty-input").length > 0;
+      if (ready || tries > 60) {
+        clearInterval(intv);
+        if (!allow) removeTargetForm();
+      }
+    }, 200);
+  }
+
+  $(init);
+})();
+
+
   // ===== New User Request form logic (classic markup) =====
   var ticketForm = location.search.split('ticket_form_id=')[1];
   if (ticketForm == 40202845830427) {
