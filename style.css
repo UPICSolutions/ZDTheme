@@ -4829,28 +4829,37 @@ zd-summary-block {
   font-style: italic;
   padding: 0 15px;
 }
-.contact-dropdown {
+.contact-details-nav {
   position: relative;
 }
 
-.contact-dropdown-toggle {
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  color: inherit;
-  font: inherit;
+.contact-details {
+  position: relative;
+}
+
+.contact-details-summary {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0;
+  cursor: pointer;
+  list-style: none;
+  color: inherit;
+  font: inherit;
 }
 
-.contact-dropdown-chevron-icon {
+.contact-details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.contact-details-chevron {
   flex-shrink: 0;
 }
 
-.contact-dropdown-menu {
-  display: none;
+.contact-details[open] .contact-details-chevron {
+  transform: rotate(180deg);
+}
+
+.contact-details-menu {
   position: absolute;
   top: 100%;
   right: 0;
@@ -4864,13 +4873,8 @@ zd-summary-block {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-.contact-dropdown:hover .contact-dropdown-menu,
-.contact-dropdown:focus-within .contact-dropdown-menu {
-  display: block;
-}
-
-.contact-dropdown-menu a,
-.contact-dropdown-menu .contact-hours {
+.contact-details-menu a,
+.contact-details-hours {
   display: block;
   padding: 8px 16px;
   color: #333333;
@@ -4879,13 +4883,13 @@ zd-summary-block {
   line-height: 1.4;
 }
 
-.contact-dropdown-menu a:hover,
-.contact-dropdown-menu a:focus {
+.contact-details-menu a:hover,
+.contact-details-menu a:focus {
   background: #f5f5f5;
   text-decoration: none;
 }
 
-.contact-hours {
+.contact-details-hours {
   cursor: default;
 }
 
