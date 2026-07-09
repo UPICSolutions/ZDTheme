@@ -4845,6 +4845,10 @@ zd-summary-block {
   padding: 0;
 }
 
+.contact-dropdown-chevron-icon {
+  flex-shrink: 0;
+}
+
 .contact-dropdown-menu {
   display: none;
   position: absolute;
