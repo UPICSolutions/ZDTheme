@@ -4829,52 +4829,52 @@ zd-summary-block {
   font-style: italic;
   padding: 0 15px;
 }
-.contact-details-nav {
+.ms-contact-nav {
   position: relative;
 }
 
-.contact-details {
-  position: relative;
-}
-
-.contact-details-summary {
+.ms-contact-button {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
   display: flex;
   align-items: center;
   gap: 4px;
-  cursor: pointer;
-  list-style: none;
-  color: inherit;
-  font: inherit;
+  padding: 0;
 }
 
-.contact-details-summary::-webkit-details-marker {
-  display: none;
+.ms-contact-button:hover,
+.ms-contact-button:focus {
+  text-decoration: underline;
 }
 
-.contact-details-chevron {
+.ms-contact-chevron {
   flex-shrink: 0;
+  transition: transform 0.15s ease;
 }
 
-.contact-details[open] .contact-details-chevron {
+.ms-contact-button[aria-expanded="true"] .ms-contact-chevron {
   transform: rotate(180deg);
 }
 
-.contact-details-menu {
+.ms-contact-menu {
   position: absolute;
   top: 100%;
   right: 0;
   z-index: 1000;
   min-width: 275px;
   padding: 8px 0;
-  margin-top: 0;
+  margin-top: 6px;
   background: #ffffff;
   border: 1px solid #ddd;
   border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-.contact-details-menu a,
-.contact-details-hours {
+.ms-contact-menu a,
+.ms-contact-hours {
   display: block;
   padding: 8px 16px;
   color: #333333;
@@ -4883,16 +4883,16 @@ zd-summary-block {
   line-height: 1.4;
 }
 
-.contact-details-menu a:hover,
-.contact-details-menu a:focus {
+.ms-contact-menu a:hover,
+.ms-contact-menu a:focus {
   background: #f5f5f5;
   text-decoration: none;
 }
 
-.contact-details-hours {
+.ms-contact-hours {
   cursor: default;
 }
 
-.contact-mobile strong {
+.ms-contact-mobile strong {
   display: block;
 }
