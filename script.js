@@ -184,5 +184,44 @@ document.addEventListener('DOMContentLoaded', function () {
     updateTerminationNotice();
   });
   mo.observe(document.body, { childList: true, subtree: true });
+ // Contact Us Header
+  document.addEventListener("DOMContentLoaded", function () {
+  var contactButton = document.getElementById("ms-contact-button");
+  var contactMenu = document.getElementById("ms-contact-menu");
 
+  if (!contactButton || !contactMenu) return;
+
+  function closeContactMenu() {
+    contactMenu.hidden = true;
+    contactButton.setAttribute("aria-expanded", "false");
+  }
+
+  function openContactMenu() {
+    contactMenu.hidden = false;
+    contactButton.setAttribute("aria-expanded", "true");
+  }
+
+  contactButton.addEventListener("click", function (event) {
+    event.stopPropagation();
+
+    if (contactMenu.hidden) {
+      openContactMenu();
+    } else {
+      closeContactMenu();
+    }
+  });
+
+  document.addEventListener("click", function (event) {
+    if (!contactMenu.contains(event.target) && !contactButton.contains(event.target)) {
+      closeContactMenu();
+    }
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closeContactMenu();
+      contactButton.focus();
+    }
+  });
+});
 });
