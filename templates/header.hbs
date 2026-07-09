@@ -15,7 +15,30 @@
       <ul class="user-nav-list">
         <li>{{link 'community'}}</li>
         <li>{{link 'service_catalog'}}</li>
+
+        <li class="contact-dropdown dropdown">
+          <button class="dropdown-toggle contact-dropdown-toggle" aria-haspopup="true">
+            Contact Us
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" focusable="false" viewBox="0 0 12 12" class="dropdown-chevron-icon" aria-hidden="true">
+              <path fill="none" stroke="currentColor" stroke-linecap="round" d="M3 4.5l2.6 2.6c.2.2.5.2.7 0L9 4.5"/>
+            </svg>
+          </button>
+
+          <div class="dropdown-menu contact-dropdown-menu" role="menu">
+            <a href="tel:+18774595489" role="menuitem">
+              Phone: 877-459-5489
+            </a>
+            <a href="mailto:answercenter@upicsolutions.org" role="menuitem">
+              Email: answercenter@upicsolutions.org
+            </a>
+            <div class="contact-hours" role="menuitem">
+              Hours: Monday through Friday, 8:00 AM to 8:00 PM ET
+            </div>
+          </div>
+        </li>
+
         <li>{{link 'new_request' class='submit-a-request'}}</li>
+
         {{#unless signed_in}}
           <li>
             {{#link "sign_in" class="sign-in"}}
@@ -25,6 +48,7 @@
         {{/unless}}
       </ul>
     </nav>
+
     {{#if signed_in}}
       <div class="user-info dropdown">
         <button class="dropdown-toggle" aria-haspopup="true">
@@ -59,6 +83,7 @@
         <path fill="none" stroke="currentColor" stroke-linecap="round" d="M1.5 3.5h13m-13 4h13m-13 4h13"/>
       </svg>
     </button>
+
     <nav class="menu-list-mobile" id="user-nav-mobile" aria-expanded="false">
       <ul class="menu-list-mobile-items">
         {{#if signed_in}}
@@ -85,10 +110,31 @@
           </li>
           <li class="nav-divider"></li>
         {{/if}}
+
         <li class="item">{{link 'community'}}</li>
-        <li class="item">{{link 'new_request' class='submit-a-request'}}</li>
         <li class="item">{{link 'service_catalog'}}</li>
+
         <li class="nav-divider"></li>
+
+        <li class="item contact-mobile">
+          <strong>Contact Us</strong>
+        </li>
+        <li class="item">
+          <a href="tel:5555555555">Phone: 555-555-5555</a>
+        </li>
+        <li class="item">
+          <a href="mailto:member.services@upicsolutions.org">Email: member.services@upicsolutions.org</a>
+        </li>
+        <li class="item">
+          Hours: Monday through Friday, 8:00 AM to 5:00 PM ET
+        </li>
+
+        <li class="nav-divider"></li>
+
+        <li class="item">{{link 'new_request' class='submit-a-request'}}</li>
+
+        <li class="nav-divider"></li>
+
         {{#if signed_in}}
           <li class="item">
             {{link "sign_out"}}
@@ -97,5 +143,4 @@
       </ul>
     </nav>
   </div>
-
 </header>
