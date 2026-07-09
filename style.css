@@ -4853,7 +4853,7 @@ zd-summary-block {
   z-index: 1000;
   min-width: 275px;
   padding: 8px 0;
-  margin-top: 8px;
+  margin-top: 0;
   background: #ffffff;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -4883,4 +4883,8 @@ zd-summary-block {
 
 .contact-hours {
   cursor: default;
+}
+
+.contact-mobile strong {
+  display: block;
 }
