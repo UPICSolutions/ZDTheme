@@ -4846,26 +4846,41 @@ zd-summary-block {
 }
 
 .contact-dropdown-menu {
-  min-width: 260px;
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 1000;
+  min-width: 275px;
+  padding: 8px 0;
+  margin-top: 8px;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.contact-dropdown:hover .contact-dropdown-menu,
+.contact-dropdown:focus-within .contact-dropdown-menu {
+  display: block;
 }
 
 .contact-dropdown-menu a,
 .contact-dropdown-menu .contact-hours {
   display: block;
   padding: 8px 16px;
-  color: inherit;
+  color: #333333;
   text-decoration: none;
   white-space: normal;
+  line-height: 1.4;
 }
 
-.contact-dropdown-menu a:hover {
-  text-decoration: underline;
+.contact-dropdown-menu a:hover,
+.contact-dropdown-menu a:focus {
+  background: #f5f5f5;
+  text-decoration: none;
 }
 
 .contact-hours {
   cursor: default;
-}
-
-.contact-mobile strong {
-  display: block;
 }
